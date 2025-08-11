@@ -7,11 +7,18 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Generate Prisma client
 RUN npx prisma generate
+
+# Copy source code
+COPY src ./src
+COPY tsconfig.json ./
+
+# Build TypeScript
+RUN npm run build
 
 # Production stage
 FROM node:18-alpine AS production
@@ -22,20 +29,18 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nodejs -u 1001
 
-# Copy built application
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 
-# Copy source code
-COPY --chown=nodejs:nodejs src ./src
-COPY --chown=nodejs:nodejs tsconfig.json ./
-
-# Build TypeScript
-RUN npm run build
-
-# Remove source files and dev dependencies
-RUN rm -rf src tsconfig.json
+# Generate Prisma client in production stage
+RUN npx prisma generate
 
 # Switch to non-root user
 USER nodejs
