@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
@@ -34,7 +34,7 @@ ENV S3_BUCKET_NAME="dummy-bucket"
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:18-slim AS production
 
 WORKDIR /app
 
@@ -49,8 +49,7 @@ ENV S3_ENDPOINT=
 ENV S3_BUCKET_NAME=
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 
 # Copy package files
 COPY package*.json ./
