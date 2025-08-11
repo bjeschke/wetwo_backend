@@ -14,7 +14,8 @@
     "test:unit": "vitest run src/utils/date.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "postinstall": "prisma generate"
   },
   "keywords": [
     "backend",

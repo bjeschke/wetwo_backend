@@ -51,17 +51,18 @@ ENV S3_BUCKET_NAME=
 # Create non-root user
 RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 
-# Copy package files
+# Copy package files and prisma schema
 COPY package*.json ./
+COPY prisma ./prisma/
 
 # Install only production dependencies
 RUN npm ci --only=production
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# Generate Prisma client in production stage
+# Generate Prisma client in production stage (if needed)
 RUN npx prisma generate
 
 # Switch to non-root user
