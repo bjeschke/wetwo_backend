@@ -7,9 +7,22 @@ import { verifyAppleIdToken } from '../../auth/apple';
 import { generateToken } from '../../auth/jwt';
 import env from '../../config/env';
 import logger from '../../config/logger';
+import bcrypt from 'bcrypt';
 
 const appleSignInSchema = z.object({
   idToken: z.string(),
+});
+
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  name: z.string().min(1),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const signinSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
 });
 
 export async function appleSignIn(req: Request, res: Response): Promise<void> {
@@ -92,5 +105,140 @@ export async function appleSignIn(req: Request, res: Response): Promise<void> {
     }
     
     sendError(res, 'INTERNAL', 'Authentication failed', 500);
+  }
+}
+
+export async function signup(req: Request, res: Response): Promise<void> {
+  try {
+    const validationResult = signupSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return sendError(
+        res,
+        'BAD_REQUEST',
+        'Invalid request data',
+        400,
+        validationResult.error.errors
+      );
+    }
+
+    const { email, password, name, birthDate } = validationResult.data;
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return sendError(res, 'CONFLICT', 'User with this email already exists', 409);
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Create user and profile
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        name,
+        birthDate: new Date(birthDate),
+        profile: {
+          create: {
+            name,
+            birthDate: new Date(birthDate),
+            zodiacSign: 'unknown', // Can be calculated later
+          },
+        },
+      },
+      include: { profile: true },
+    });
+
+    // Generate JWT token
+    const token = generateToken(user.id);
+
+    logger.info({ userId: user.id }, 'User signup successful');
+
+    sendSuccess(res, {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      profile: user.profile,
+    });
+  } catch (error) {
+    logger.error({ error }, 'User signup failed');
+    
+    if (error instanceof AppError) {
+      return sendError(res, error.code as any, error.message, error.statusCode);
+    }
+    
+    sendError(res, 'INTERNAL', 'Signup failed', 500);
+  }
+}
+
+export async function signin(req: Request, res: Response): Promise<void> {
+  try {
+    const validationResult = signinSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      return sendError(
+        res,
+        'BAD_REQUEST',
+        'Invalid request data',
+        400,
+        validationResult.error.errors
+      );
+    }
+
+    const { email, password } = validationResult.data;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      return sendError(res, 'UNAUTHORIZED', 'Invalid email or password', 401);
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return sendError(res, 'UNAUTHORIZED', 'Invalid email or password', 401);
+    }
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Generate JWT token
+    const token = generateToken(user.id);
+
+    logger.info({ userId: user.id }, 'User signin successful');
+
+    sendSuccess(res, {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      profile: user.profile,
+    });
+  } catch (error) {
+    logger.error({ error }, 'User signin failed');
+    
+    if (error instanceof AppError) {
+      return sendError(res, error.code as any, error.message, error.statusCode);
+    }
+    
+    sendError(res, 'INTERNAL', 'Signin failed', 500);
   }
 }

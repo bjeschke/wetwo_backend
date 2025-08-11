@@ -142,6 +142,15 @@ export async function getTodayMood(req: AuthenticatedRequest, res: Response): Pr
 
 export async function getMoodList(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    const { user_id } = req.query;
+    
+    // Check if user is requesting their own mood entries or has permission
+    if (user_id !== req.user.id) {
+      // For now, only allow users to access their own mood entries
+      // In the future, this could be extended to allow partners to view each other's mood entries
+      return sendError(res, 'FORBIDDEN', 'Access denied', 403);
+    }
+
     const validationResult = moodListQuerySchema.safeParse(req.query);
     
     if (!validationResult.success) {

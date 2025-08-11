@@ -15,6 +15,10 @@ import healthRouter from './modules/health/router';
 import authRouter from './modules/auth/router';
 import profileRouter from './modules/profile/router';
 import moodRouter from './modules/mood/router';
+import memoriesRouter from './modules/memories/router';
+import partnershipsRouter from './modules/partnerships/router';
+import loveMessagesRouter from './modules/love-messages/router';
+import notificationsRouter from './modules/notifications/router';
 
 const app = express();
 
@@ -73,6 +77,10 @@ app.use('/', healthRouter);
 app.use('/', authLimiter, authRouter);
 app.use('/', writeLimiter, profileRouter);
 app.use('/', writeLimiter, moodRouter);
+app.use('/', writeLimiter, memoriesRouter);
+app.use('/', writeLimiter, partnershipsRouter);
+app.use('/', writeLimiter, loveMessagesRouter);
+app.use('/', writeLimiter, notificationsRouter);
 
 // 404 handler
 app.use('*', (req, res) => {

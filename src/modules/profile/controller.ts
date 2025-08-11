@@ -10,8 +10,17 @@ import logger from '../../config/logger';
 
 export async function getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    const { id } = req.params;
+    
+    // Check if user is requesting their own profile or has permission
+    if (id !== req.user.id) {
+      // For now, only allow users to access their own profile
+      // In the future, this could be extended to allow partners to view each other's profiles
+      return sendError(res, 'FORBIDDEN', 'Access denied', 403);
+    }
+
     const profile = await prisma.profile.findUnique({
-      where: { id: req.user.id },
+      where: { id },
       include: {
         user: {
           select: {
@@ -36,6 +45,13 @@ export async function getProfile(req: AuthenticatedRequest, res: Response): Prom
 
 export async function updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    const { id } = req.params;
+    
+    // Check if user is updating their own profile
+    if (id !== req.user.id) {
+      return sendError(res, 'FORBIDDEN', 'Access denied', 403);
+    }
+
     const validationResult = updateProfileSchema.safeParse(req.body);
     
     if (!validationResult.success) {
@@ -66,10 +82,10 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
     }
 
     const profile = await prisma.profile.upsert({
-      where: { id: req.user.id },
+      where: { id },
       update: updateData,
       create: {
-        id: req.user.id,
+        id,
         name: data.name,
         birthDate: data.birthDate ? toUtcStartOfDay(data.birthDate) : new Date('1990-01-01'),
         zodiacSign: data.birthDate ? zodiacFromDate(toUtcStartOfDay(data.birthDate)) : 'unknown',
