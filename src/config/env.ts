@@ -59,6 +59,16 @@ function validateEnv() {
   }
 }
 
-const env = validateEnv();
+// Create a proxy that validates environment variables only when accessed
+const envProxy = new Proxy({} as z.infer<typeof envSchema>, {
+  get(target, prop) {
+    if (!target[prop as keyof typeof target]) {
+      // Only validate when first accessed
+      const validatedEnv = validateEnv();
+      Object.assign(target, validatedEnv);
+    }
+    return target[prop as keyof typeof target];
+  }
+});
 
-export default env;
+export default envProxy;

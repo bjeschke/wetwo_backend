@@ -17,6 +17,15 @@ RUN npx prisma generate
 COPY src ./src
 COPY tsconfig.json ./
 
+# Set build-time environment variables to prevent validation errors during TypeScript compilation
+# These are dummy values only used during build and will be cleared in the production stage
+ENV NODE_ENV=production
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV JWT_SECRET="dummy-secret-key-for-build-only-minimum-32-chars"
+ENV CORS_ORIGIN="*"
+ENV APPLE_AUDIENCE="com.dummy.app"
+ENV APPLE_ISSUER="https://appleid.apple.com"
+
 # Build TypeScript
 RUN npm run build
 
@@ -24,6 +33,12 @@ RUN npm run build
 FROM node:18-alpine AS production
 
 WORKDIR /app
+
+# Clear any build-time environment variables
+ENV DATABASE_URL=
+ENV JWT_SECRET=
+ENV APPLE_AUDIENCE=
+ENV APPLE_ISSUER=
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
