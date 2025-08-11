@@ -30,6 +30,14 @@ const envSchema = z.object({
   
   // Railway-specific (optional)
   RAILWAY_RUN_MIGRATIONS: z.string().optional(),
+  
+  // Cloudflare R2 / S3 Configuration (optional - only if using file storage)
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  S3_ENDPOINT: z.string().url('S3_ENDPOINT must be a valid URL').optional(),
+  S3_BUCKET_NAME: z.string().optional(),
+  R2_PUBLIC_HASH: z.string().optional(),
 });
 
 /**

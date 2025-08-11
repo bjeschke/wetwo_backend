@@ -58,6 +58,7 @@ export async function createMood(req: AuthenticatedRequest, res: Response): Prom
         date,
         moodLevel: data.moodLevel,
         eventLabel: data.eventLabel || null,
+        photoData: data.photoUrl || null,
       },
     });
 

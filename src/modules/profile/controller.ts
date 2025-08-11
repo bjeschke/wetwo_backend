@@ -11,7 +11,7 @@ import logger from '../../config/logger';
 export async function getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const profile = await prisma.profile.findUnique({
-      where: { userId: req.user.id },
+      where: { id: req.user.id },
       include: {
         user: {
           select: {
@@ -54,7 +54,7 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
     };
 
     if (data.photoUrl !== undefined) {
-      updateData.photoUrl = data.photoUrl;
+      updateData.profilePhotoUrl = data.photoUrl;
     }
 
     if (data.birthDate) {
@@ -66,14 +66,14 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
     }
 
     const profile = await prisma.profile.upsert({
-      where: { userId: req.user.id },
+      where: { id: req.user.id },
       update: updateData,
       create: {
-        userId: req.user.id,
+        id: req.user.id,
         name: data.name,
-        birthDate: data.birthDate ? toUtcStartOfDay(data.birthDate) : null,
+        birthDate: data.birthDate ? toUtcStartOfDay(data.birthDate) : new Date('1990-01-01'),
         zodiacSign: data.birthDate ? zodiacFromDate(toUtcStartOfDay(data.birthDate)) : 'unknown',
-        photoUrl: data.photoUrl || null,
+        profilePhotoUrl: data.photoUrl || null,
       },
       include: {
         user: {

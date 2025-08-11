@@ -4,6 +4,7 @@ export const createMoodSchema = z.object({
   moodLevel: z.number().int().min(0).max(5),
   eventLabel: z.string().max(200).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  photoUrl: z.string().url().optional(),
 });
 
 export const updateMoodSchema = z.object({

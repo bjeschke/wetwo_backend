@@ -25,6 +25,10 @@ ENV JWT_SECRET="dummy-secret-key-for-build-only-minimum-32-chars"
 ENV CORS_ORIGIN="*"
 ENV APPLE_AUDIENCE="com.dummy.app"
 ENV APPLE_ISSUER="https://appleid.apple.com"
+ENV AWS_ACCESS_KEY_ID="dummy-access-key"
+ENV AWS_SECRET_ACCESS_KEY="dummy-secret-key"
+ENV S3_ENDPOINT="https://dummy.r2.cloudflarestorage.com"
+ENV S3_BUCKET_NAME="dummy-bucket"
 
 # Build TypeScript
 RUN npm run build
@@ -39,6 +43,10 @@ ENV DATABASE_URL=
 ENV JWT_SECRET=
 ENV APPLE_AUDIENCE=
 ENV APPLE_ISSUER=
+ENV AWS_ACCESS_KEY_ID=
+ENV AWS_SECRET_ACCESS_KEY=
+ENV S3_ENDPOINT=
+ENV S3_BUCKET_NAME=
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

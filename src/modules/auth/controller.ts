@@ -36,8 +36,12 @@ export async function appleSignIn(req: Request, res: Response): Promise<void> {
     );
 
     // Find or create user
-    let user = await prisma.user.findUnique({
-      where: { appleSub: appleData.sub },
+    let user = await prisma.user.findFirst({
+      where: { 
+        profile: {
+          appleUserId: appleData.sub
+        }
+      },
       include: { profile: true },
     });
 
@@ -45,12 +49,16 @@ export async function appleSignIn(req: Request, res: Response): Promise<void> {
       // Create new user and profile
       user = await prisma.user.create({
         data: {
-          appleSub: appleData.sub,
-          email: appleData.email || null,
+          email: appleData.email || 'apple_user_' + appleData.sub,
+          passwordHash: 'apple_auth_' + appleData.sub, // Placeholder for Apple auth
+          name: 'Apple User',
+          birthDate: new Date('1990-01-01'), // Default birth date
           profile: {
             create: {
-              name: '',
+              name: 'Apple User',
+              birthDate: new Date('1990-01-01'),
               zodiacSign: 'unknown',
+              appleUserId: appleData.sub,
             },
           },
         },

@@ -6,11 +6,13 @@ async function main() {
 
   // Create a test user
   const user = await prisma.user.upsert({
-    where: { appleSub: 'test_apple_sub_123' },
+    where: { email: 'test@example.com' },
     update: {},
     create: {
-      appleSub: 'test_apple_sub_123',
       email: 'test@example.com',
+      passwordHash: 'hashed_password_for_test',
+      name: 'Test User',
+      birthDate: new Date('1990-01-01'),
       profile: {
         create: {
           name: 'Test User',
