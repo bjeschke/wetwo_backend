@@ -1,3 +1,7 @@
+// Load environment variables as early as possible
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -105,6 +109,16 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully');
   process.exit(0);
+});
+
+// Environment check log
+console.log('🔧 Environment loaded:', {
+  hasDb: !!process.env.DATABASE_URL,
+  hasJwt: !!process.env.JWT_SECRET,
+  hasAppleAudience: !!process.env.APPLE_AUDIENCE,
+  hasAppleIssuer: !!process.env.APPLE_ISSUER,
+  nodeEnv: process.env.NODE_ENV,
+  port: process.env.PORT
 });
 
 // Start server

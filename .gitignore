@@ -96,6 +96,14 @@ Thumbs.db
 
 # Prisma
 prisma/migrations/
+prisma/dev.db
+prisma/dev.db-journal
+
+# Database files
+database/
+
+# Railway configuration
+railway.json
 
 # Test files
 *.test.js

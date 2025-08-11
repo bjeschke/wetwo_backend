@@ -47,8 +47,18 @@ A production-ready backend API for the WeTwo mood tracking application built wit
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env
+   # Copy the example environment file
+   cp env.example .env
+   
    # Edit .env with your configuration
+   # For local development, you can use SQLite:
+   DATABASE_URL="file:./dev.db"
+   JWT_SECRET="your-secure-jwt-secret-key-minimum-32-characters"
+   CORS_ORIGIN="http://localhost:5173"
+   APPLE_AUDIENCE="com.jacqueline.wetwo"
+   APPLE_ISSUER="https://appleid.apple.com"
+   PORT=3000
+   NODE_ENV=development
    ```
 
 4. **Set up the database**
@@ -56,7 +66,7 @@ A production-ready backend API for the WeTwo mood tracking application built wit
    # Generate Prisma client
    npm run db:generate
    
-   # Run migrations
+   # Run migrations (creates database and tables)
    npm run db:migrate
    
    # (Optional) Seed with test data
@@ -69,6 +79,63 @@ A production-ready backend API for the WeTwo mood tracking application built wit
    ```
 
 The API will be available at `http://localhost:3000`
+
+### Railway Deployment
+
+1. **Connect your repository to Railway**
+   - Go to [Railway.app](https://railway.app)
+   - Create a new project
+   - Connect your GitHub repository
+
+2. **Set up PostgreSQL Database**
+   - Add a PostgreSQL service to your project
+   - Railway will automatically provide the `DATABASE_URL` environment variable
+   - The database will be created automatically
+
+3. **Set up environment variables in Railway**
+   - Go to your project settings
+   - Add these environment variables:
+   ```env
+   NODE_ENV=production
+   PORT=3000
+   DATABASE_URL=postgresql://...  # Railway provides this automatically
+   JWT_SECRET=your-secure-production-jwt-secret-minimum-32-characters
+   CORS_ORIGIN=https://your-frontend-domain.com
+   APPLE_AUDIENCE=com.jacqueline.wetwo
+   APPLE_ISSUER=https://appleid.apple.com
+   ```
+
+4. **Database Setup**
+   - Railway will automatically run the database migrations
+   - The complete schema will be created with all tables, indexes, and functions
+   - Sample data will be inserted automatically
+
+5. **Deploy**
+   - Railway will automatically detect the Dockerfile and build your application
+   - The application will be deployed and available at the provided Railway URL
+   - Health checks will run automatically on `/health` endpoint
+
+### Database Schema
+
+The application uses a comprehensive PostgreSQL schema with the following features:
+
+- **Users & Profiles**: Complete user management with Apple Sign-In support
+- **Partnerships**: Couple connections with unique codes
+- **Memories**: Shared memories and events between partners
+- **Mood Tracking**: Daily mood entries with insights
+- **Love Messages**: Private messaging between partners
+- **Notifications**: Push notification system
+- **File Storage**: Metadata for uploaded files
+- **Sessions**: User authentication sessions
+
+The schema includes:
+- ✅ UUID primary keys for security
+- ✅ Proper foreign key relationships
+- ✅ Database indexes for performance
+- ✅ Triggers for automatic timestamps
+- ✅ PostgreSQL functions for business logic
+- ✅ Views for common queries
+- ✅ Sample data for testing
 
 ## Environment Variables
 

@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file for WeTwo Backend
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -11,46 +11,175 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String?  @unique
-  appleSub  String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  passwordHash    String    @map("password_hash")
+  name            String
+  birthDate       DateTime  @map("birth_date") @db.Date
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  lastLogin       DateTime? @map("last_login") @db.Timestamptz
+  isActive        Boolean   @default(true) @map("is_active")
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  verificationToken String? @map("verification_token")
+  resetToken      String?   @map("reset_token")
+  resetTokenExpires DateTime? @map("reset_token_expires") @db.Timestamptz
 
-  profile   Profile?
-  moodEntries MoodEntry[]
+  // Relations
+  profile         Profile?
+  partnerships    Partnership[] @relation("UserPartnerships")
+  partnerPartnerships Partnership[] @relation("PartnerPartnerships")
+  memories        Memory[]
+  partnerMemories Memory[] @relation("PartnerMemories")
+  moodEntries     MoodEntry[]
+  sentLoveMessages LoveMessage[] @relation("SentMessages")
+  receivedLoveMessages LoveMessage[] @relation("ReceivedMessages")
+  notifications   Notification[]
+  storageFiles    StorageFile[]
+  userSessions    UserSession[]
 
   @@map("users")
 }
 
 model Profile {
-  id         String    @id @default(cuid())
-  userId     String    @unique
-  name       String
-  birthDate  DateTime?
-  zodiacSign String    @default("unknown")
-  photoUrl   String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id                String    @id @default(uuid()) @db.Uuid
+  name              String
+  zodiacSign        String    @map("zodiac_sign")
+  birthDate         DateTime  @map("birth_date") @db.Date
+  profilePhotoUrl   String?   @map("profile_photo_url")
+  relationshipStatus String?  @map("relationship_status")
+  hasChildren       String?   @map("has_children")
+  childrenCount     String?   @map("children_count")
+  pushToken         String?   @map("push_token")
+  appleUserId       String?   @map("apple_user_id")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  user              User      @relation(fields: [id], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
 
-model MoodEntry {
-  id         String    @id @default(cuid())
-  userId     String
-  date       DateTime
-  moodLevel  Int
-  eventLabel String?
-  photoUrl   String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+model Partnership {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  partnerId      String    @map("partner_id") @db.Uuid
+  connectionCode String    @unique @map("connection_code")
+  status         String    @default("active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  user           User      @relation("UserPartnerships", fields: [userId], references: [id], onDelete: Cascade)
+  partner        User      @relation("PartnerPartnerships", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, partnerId])
+  @@map("partnerships")
+}
+
+model Memory {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  partnerId   String?   @map("partner_id") @db.Uuid
+  date        DateTime  @db.Date
+  title       String
+  description String?
+  photoData   String?   @map("photo_data")
+  location    String?
+  moodLevel   String    @map("mood_level")
+  tags        String?
+  isShared    String    @default("false") @map("is_shared")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partner     User?     @relation("PartnerMemories", fields: [partnerId], references: [id], onDelete: SetNull)
+
+  @@map("memories")
+}
+
+model MoodEntry {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  date        DateTime  @db.Date
+  moodLevel   Int       @map("mood_level")
+  eventLabel  String?   @map("event_label")
+  location    String?
+  photoData   String?   @map("photo_data")
+  insight     String?
+  loveMessage String?   @map("love_message")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
-  @@index([userId, date])
   @@map("mood_entries")
+}
+
+model LoveMessage {
+  id          String    @id @default(uuid()) @db.Uuid
+  senderId    String    @map("sender_id") @db.Uuid
+  receiverId  String    @map("receiver_id") @db.Uuid
+  message     String
+  isRead      Boolean   @default(false) @map("is_read")
+  timestamp   DateTime  @default(now()) @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("love_messages")
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String
+  body      String
+  type      String
+  data      Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  sentAt    DateTime  @default(now()) @map("sent_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model StorageFile {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  fileName   String    @map("file_name")
+  filePath   String    @map("file_path")
+  fileSize   BigInt    @map("file_size")
+  mimeType   String    @map("mime_type")
+  fileType   String    @map("file_type")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("storage_files")
+}
+
+model UserSession {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @map("token_hash")
+  refreshTokenHash  String    @map("refresh_token_hash")
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastUsed          DateTime  @default(now()) @map("last_used") @db.Timestamptz
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
 }
