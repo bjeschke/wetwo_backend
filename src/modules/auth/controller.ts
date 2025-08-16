@@ -17,8 +17,15 @@ const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+}).refine((data) => data.birthDate || data.birth_date, {
+  message: "Either birthDate or birth_date is required",
+  path: ["birthDate"],
+}).transform((data) => ({
+  ...data,
+  birthDate: data.birthDate || data.birth_date!,
+}));
 
 const signinSchema = z.object({
   email: z.string().email(),
